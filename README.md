@@ -1,4 +1,5 @@
 [![PyPI version](https://img.shields.io/pypi/v/pyspark-cdc.svg)](https://pypi.org/project/pyspark-cdc/)
+[![Test](https://github.com/Bitros/pyspark-cdc/actions/workflows/test.yaml/badge.svg)](https://github.com/Bitros/pyspark-cdc/actions/workflows/test.yaml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![code style](https://img.shields.io/badge/code_style-black-black)](https://github.com/psf/black)
 

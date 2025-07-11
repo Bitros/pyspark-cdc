@@ -36,7 +36,7 @@ jobs:
 
       - name: Start PostgreSQL in Docker
         run: |
-          docker run -d --name postgres --network host docker.io/postgres:16
+          docker run -d --name postgres -p 5432:5432 docker.io/postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
