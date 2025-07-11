@@ -40,6 +40,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
 
       - name: Add PostgreSQL to /etc/hosts
         run: |
@@ -48,6 +49,16 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install --with test
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until pg_isready -h postgres -p 5432; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 5
+          done
+
+          docker ps -a
+          docker logs postgres
 
       - name: Run tests
         run: |
