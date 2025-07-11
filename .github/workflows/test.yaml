@@ -36,11 +36,7 @@ jobs:
 
       - name: Start PostgreSQL in Docker
         run: |
-          docker run -d --name postgres -p 5432:5432 docker.io/postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
+          docker run -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres docker.io/postgres:16
 
       - name: Add PostgreSQL to /etc/hosts
         run: |
@@ -49,18 +45,6 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install --with test
-
-      - name: Wait for PostgreSQL to be ready
-        run: |
-
-          docker ps -a
-          docker logs postgres
-
-          pg_isready -h postgres -p 5432  || true
-          pg_isready -h 127.0.0.1 -p 5432  || true
-          pg_isready -h localhost -p 5432  || true
-
-
 
       - name: Run tests
         run: |
