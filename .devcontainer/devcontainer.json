@@ -1,0 +1,29 @@
+{
+	"name": "Py3.11_Java17_Poetry",
+	"image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+	"features": {
+		"ghcr.io/devcontainers/features/java:1": {
+			"version": "17",
+			"jdkDistro": "ms"
+		}
+	},
+	"postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.mypy-type-checker",
+				"ms-python.black-formatter",
+				"ms-ossdata.vscode-pgsql"
+			]
+		}
+	},
+	"containerEnv": {
+		"http_proxy": "${localEnv:http_proxy}",
+		"https_proxy": "${localEnv:https_proxy}",
+		"no_proxy": "${localEnv:no_proxy}"
+	},
+	"runArgs": [
+		"--name",
+		"vscode_pyspark_cdc_devcontainer"
+	]
+}

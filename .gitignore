@@ -1,0 +1,11 @@
+.venv
+.mypy*
+__pycache__
+*.pyc
+temp
+.pytest_cache
+spark-warehouse
+metastore_db
+*.log
+dist
+artifacts
