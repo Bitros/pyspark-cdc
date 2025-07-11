@@ -6,7 +6,7 @@ from typing import Any
 
 import psycopg
 import pytest
-from tests.test_utils.employee_generator import EmployeeGenerator
+from pyspark_cdc_test.test_utils.employee_generator import EmployeeGenerator
 
 connection_string = "postgresql://postgres:postgres@postgres:5432/postgres"
 conn = psycopg.connect(connection_string)
