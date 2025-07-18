@@ -21,15 +21,17 @@ def create_spark_delta_enabled_session(
     return configure_spark_with_delta_pip(
         SparkSession.builder.appName(app_name)
         .master("local[*]")
+        .config("spark.ui.enabled", "false")
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config(
             "spark.sql.catalog.spark_catalog",
             "org.apache.spark.sql.delta.catalog.DeltaCatalog",
         )
         .config(
-            "spark.sql.warehouse.dir", f"{os.path.dirname(__file__)}/spark-warehouse"
+            "spark.sql.warehouse.dir",
+            Path(__file__).parent.resolve() / "spark-warehouse",
         )
-        .config("spark.local.dir", f"{os.path.dirname(__file__)}/temp"),
+        .config("spark.local.dir", Path(__file__).parent.resolve() / "temp"),
         extra_packages=extra_packages,
     ).getOrCreate()
 
@@ -41,7 +43,7 @@ def databricks_runtime() -> bool:
 @pytest.fixture(scope="session")
 def clean_up() -> bool:
     if not databricks_runtime():
-        warehouse = Path(f"{os.path.dirname(__file__)}/spark-warehouse")
+        warehouse = Path(__file__).parent.resolve() / "spark-warehouse"
         shutil.rmtree(warehouse) if warehouse.exists() else ...
     return True
 
@@ -56,5 +58,5 @@ def mock_spark() -> Generator[SparkSession, None, None]:
         )
         yield spark
         spark.stop()
-        temp_dir = Path(f"{os.path.dirname(__file__)}/temp")
+        temp_dir = Path(__file__).parent.resolve() / "temp"
         shutil.rmtree(temp_dir) if temp_dir.exists() else ...

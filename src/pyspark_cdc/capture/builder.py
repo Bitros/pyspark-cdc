@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+from zoneinfo import ZoneInfo
 
 from pyspark_cdc.capture.logger import logger
 
@@ -37,6 +38,12 @@ class CapturerBuilder:
         self.df = df
         self.spark = spark
         self.config = CapturerConfiguration()
+        # set defaults
+        self.config["timezone"] = ZoneInfo(
+            self.spark.conf.get("spark.sql.session.timeZone")
+        )
+        self.config["format"] = "delta"
+        self.config["scheduler_switch"] = "ON"
 
     def tableName(self, table_name: str) -> CapturerBuilder:
         """
@@ -297,6 +304,39 @@ class CapturerBuilder:
         logger.setLevel(level.upper())
         return self
 
+    def timezone(self, tz: str) -> CapturerBuilder:
+        """
+        Set the timezone for the capture process.
+
+        Args:
+            tz (str): The timezone string (e.g., 'UTC', 'America/New_York').
+
+        Returns:
+            CapturerBuilder: The builder instance for chaining.
+        """
+        self.config["timezone"] = ZoneInfo(tz)
+        self.spark.conf.set("spark.sql.session.timeZone", tz)
+        return self
+
+    def schedulerSwitch(self, switch: str) -> CapturerBuilder:
+        """
+        Set the scheduler switch for the capture process.
+
+        Args:
+            switch (str): The scheduler switch, either 'ON' or 'OFF'.
+
+        Returns:
+            CapturerBuilder: The builder instance for chaining.
+
+        Raises:
+            ValueError: If the switch is not 'ON' or 'OFF'.
+        """
+        switch = switch.upper()
+        if switch not in ["ON", "OFF"]:
+            raise ValueError(f"Invalid scheduler switch '{switch}'. Use 'ON' or 'OFF'.")
+        self.config["scheduler_switch"] = switch
+        return self
+
     def start(self) -> DeltaTable:
         """
         Start the capture process based on the configured properties.
@@ -310,10 +350,6 @@ class CapturerBuilder:
         if "mode" not in self.config:
             raise ValueError(
                 "Capture mode is not specified. Use the 'mode' method to specify the capture mode."
-            )
-        if "format" not in self.config:
-            raise ValueError(
-                "Table format is not specified. Use the 'format' method to specify the table format."
             )
 
         logger.info(f"CapturerBuilder Configuration: \n{self}")

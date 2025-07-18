@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 catalog_schema = os.environ.get(
     "pyspark_cdc_test_catalog_schema", "spark_catalog.default"
@@ -6,7 +7,7 @@ catalog_schema = os.environ.get(
 
 external_location = os.environ.get(
     "pyspark_cdc_test_external_location",
-    f"{os.path.dirname(__file__)}/spark-warehouse/external",
+    Path(__file__).parent.resolve() / "spark-warehouse" / "external",
 )
 
 __all__ = [

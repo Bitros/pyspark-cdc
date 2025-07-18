@@ -12,10 +12,11 @@ from pyspark_cdc.validator import columns_exist, null_watermarks_check
 from pyspark_cdc.watermark import Watermark
 
 if TYPE_CHECKING:
+    from zoneinfo import ZoneInfo
+
     from pyspark.sql import DataFrame, SparkSession
 
     from pyspark_cdc.capture.builder import CapturerConfiguration
-
 
 _int_types = {"int", "bigint", "long"}
 _datetime_types = {
@@ -171,7 +172,9 @@ def _full_capture(
     return dt
 
 
-def _max_watermark(df: DataFrame, table: str, watermark_column: str) -> Watermark:
+def _max_watermark(
+    df: DataFrame, table: str, watermark_column: str, tz: ZoneInfo
+) -> Watermark:
     _, watermark_type = df.select(watermark_column).dtypes[0]
     max_value = df.agg({f"{watermark_column}": "max"}).collect()[0][0]
     logger.info(f"Raw max watermark value: {max_value }")
@@ -182,7 +185,7 @@ def _max_watermark(df: DataFrame, table: str, watermark_column: str) -> Watermar
         )
 
     if watermark_type in _datetime_types and isinstance(max_value, datetime):
-        formated_max_value: str | int = max_value.strftime("%Y-%m-%d %H:%M:%S.%f")
+        formated_max_value: str | int = max_value.astimezone(tz).isoformat()
     elif watermark_type in _int_types and isinstance(max_value, int):
         formated_max_value = max_value
     else:
@@ -246,7 +249,9 @@ def _incremental_capture(
     join_condition = " AND ".join([f"target.{pk} = source.{pk}" for pk in primary_keys])
     logger.info(f"Join condition: {join_condition}")
 
-    max_watermark = _max_watermark(df, table_identifier, watermark_column)
+    max_watermark = _max_watermark(
+        df, table_identifier, watermark_column, config["timezone"]
+    )
 
     table_exists = (
         spark.catalog.tableExists(table_identifier)
@@ -320,18 +325,19 @@ def _incremental_capture(
 def delta_capture(
     df: DataFrame, spark: SparkSession, config: CapturerConfiguration
 ) -> DeltaTable:
-
-    match config["mode"]:
+    mode = config["mode"]
+    scheduler_switch = config["scheduler_switch"]
+    match mode:
         case "full":
             dt = _full_capture(df, spark, config)
         case "incremental":
             dt = _incremental_capture(df, spark, config)
         case _:
             raise ValueError(
-                f"Unsupported capture mode '{config['mode']}'. Supported modes are 'full' and 'incremental'."
+                f"Unsupported capture mode 'mode'. Supported modes are 'full' and 'incremental'."
             )
-    logger.info(
-        "✅ Delta table capture completed successfully. Try to optimize based on the schedulers."
-    )
-    delta_optimize(dt, config)
+    logger.info("✅ Delta table capture completed successfully.")
+    if scheduler_switch == "ON":
+        logger.info("Running delta optimization...")
+        delta_optimize(dt, config)
     return dt
