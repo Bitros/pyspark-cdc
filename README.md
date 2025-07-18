@@ -95,7 +95,7 @@ See the `samples/` directory and the `tests/` folder for more usage examples and
 > - **/**: step values
 > - **1-31**: allowed values
 
-> ⚠️ If you run capture multiple times in a day, the optimize schedulers are triggered during each run.
+> ⚠️ If you run capture multiple times in a day, the optimize schedulers are triggered during each run. You can turn it off by using `.schedulerSwitch("OFF")`
 
 ## Typical Scenarios
 The following table summarizes common use cases:
