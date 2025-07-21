@@ -12,7 +12,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-python.mypy-type-checker",
-				"ms-python.black-formatter",
+				"charliermarsh.ruff",
+				"tamasfe.even-better-toml",
 				"ms-ossdata.vscode-pgsql"
 			]
 		}
