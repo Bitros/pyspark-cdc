@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def parse_day_step(expr: str) -> Iterable[int]:
@@ -12,8 +15,8 @@ def parse_day_step(expr: str) -> Iterable[int]:
         step = int(step_str)
         if step <= 0:
             raise ValueError(f"Step must be greater than 0: {step}")
-    except ValueError:
-        raise ValueError(f"Invalid step expression: '{expr}'")
+    except ValueError as e:
+        raise ValueError(f"Invalid step expression: '{expr}'") from e
 
     if range_part == "*":
         return range(1, 32, step)
@@ -29,8 +32,8 @@ def parse_day_range(expr: str, step: int = 1) -> Iterable[int]:
     """
     try:
         start, end = map(int, expr.split("-", 1))
-    except ValueError:
-        raise ValueError(f"Invalid range format: '{expr}'")
+    except ValueError as e:
+        raise ValueError(f"Invalid range format: '{expr}'") from e
 
     if not (1 <= start <= 31):
         raise ValueError(f"Start must be between 1 and 31: {start}")
@@ -48,8 +51,8 @@ def parse_day(expr: str) -> int:
     """
     try:
         day = int(expr)
-    except ValueError:
-        raise ValueError(f"Invalid day value: '{expr}'")
+    except ValueError as e:
+        raise ValueError(f"Invalid day value: '{expr}'") from e
 
     if not (1 <= day <= 31):
         raise ValueError(f"Day must be between 1 and 31: {day}")

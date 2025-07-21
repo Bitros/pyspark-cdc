@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from pyspark_cdc.optimizer.cron_parser import parse_day_of_month

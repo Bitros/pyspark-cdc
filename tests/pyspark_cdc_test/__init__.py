@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
 catalog_schema = os.environ.get(
-    "pyspark_cdc_test_catalog_schema", "spark_catalog.default"
+    "PYSPARK_CDC_TEST_CATALOG_SCHEMA", "spark_catalog.default"
 )
 
 external_location = os.environ.get(
-    "pyspark_cdc_test_external_location",
+    "PYSPARK_CDC_TEST_EXTERNAL_LOCATION",
     Path(__file__).parent.resolve() / "spark-warehouse" / "external",
 )
 

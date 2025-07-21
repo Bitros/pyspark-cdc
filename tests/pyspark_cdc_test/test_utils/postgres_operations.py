@@ -6,6 +6,7 @@ from typing import Any
 
 import psycopg
 import pytest
+
 from pyspark_cdc_test.test_utils.employee_generator import EmployeeGenerator
 
 connection_string = "postgresql://postgres:postgres@postgres:5432/postgres"
@@ -120,17 +121,17 @@ def create_with_ddl_file(
         run_script(ddl_file)
 
 
-def test() -> None:
-    assert table_exists("public.employee") == True
-    assert table_exists("employee") == True
-    assert table_exists("not_exist.employee") == False
+def test_postgres_operations() -> None:
+    assert table_exists("public.employee")
+    assert table_exists("employee")
+    assert not table_exists("not_exist.employee")
 
     employee_ddl_file = (
         Path(__file__).resolve().parent.parent / "capture/postgres/employee_ddl.sql"
     )
     run_script(employee_ddl_file)
 
-    assert table_exists("public.employee") == True
+    assert table_exists("public.employee")
 
     generator = EmployeeGenerator()
     data, schema = generator.generate(100, watermark_start="-10d", watermark_end="-5d")

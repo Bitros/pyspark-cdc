@@ -1,6 +1,6 @@
 [project]
 name = "pyspark-cdc"
-version = "0.1.0"
+version = "0.2.0"
 description = "A Python library for Change Data Capture (CDC) workflows using PySpark and Delta Lake."
 authors = [
     {name = "Bitros Wang",email = "mopspecial@gmail.com"}
@@ -28,8 +28,6 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Quality Assurance",
 ]
-dependencies = [
-]
 
 [project.urls]
 Repository = "https://github.com/Bitros/pyspark-cdc"
@@ -39,19 +37,17 @@ Issues = "https://github.com/Bitros/pyspark-cdc/issues"
 packages = [
     {include = "pyspark_cdc", from = "src"},
     # Include the test code to upload and test .whl package in Databricks
-    {include = "pyspark_cdc_test", from = "tests", format = "wheel"},
+    # {include = "pyspark_cdc_test", from = "tests", format = "wheel"},
 ]
 
 [tool.poetry.group.dev.dependencies]
 pyspark = "^4.0.0"
 delta-spark = "^4.0.0"
-black = "^25.1.0"
 mypy = "^1.16.0"
 pre-commit = "^4.2.0"
+ruff = "^0.12.4"
 
 [tool.poetry.group.test.dependencies]
-pyspark = "^4.0.0"
-delta-spark = "^4.0.0"
 pytest = "^8.4.0"
 faker = "^37.4.0"
 psycopg = {extras = ["binary"], version = "^3.2.9"}
@@ -68,9 +64,34 @@ ignore_missing_imports = true
 non_interactive = true
 install_types = true
 
-[tool.isort]
-profile = "black"
-combine_as_imports = true
+[tool.ruff]
+fix = true
+target-version = "py311"
+extend-exclude = ["*.ipynb"]
+
+[tool.ruff.lint]
+extend-select = [
+    "B",
+    "C4",
+    "I",
+    "N",
+    "PIE",
+    "RUF",
+    "SIM",
+    "T20",
+    "TC",
+    "TID",
+    "UP",
+]
+extend-safe-fixes = [
+    "TC",
+]
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.format]
+line-ending = "lf"
 
 [tool.pytest.ini_options]
 log_cli = true

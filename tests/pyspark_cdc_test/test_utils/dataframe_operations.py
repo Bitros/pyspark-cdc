@@ -15,7 +15,6 @@ def insert(df: DataFrame, target_df: DataFrame) -> DataFrame:
 
 
 def update(df: DataFrame, updates: dict[str, Any], condition: Column) -> DataFrame:
-
     for column_name, new_value in updates.items():
         df = df.withColumn(
             column_name, when(condition, new_value).otherwise(col(column_name))

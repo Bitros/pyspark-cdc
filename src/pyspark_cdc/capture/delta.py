@@ -9,7 +9,7 @@ from delta import DeltaTable
 from pyspark_cdc.capture.logger import logger
 from pyspark_cdc.optimizer import delta_optimize
 from pyspark_cdc.validator import columns_exist, null_watermarks_check
-from pyspark_cdc.watermark import Watermark
+from pyspark_cdc.watermark import WATERMARK_TYPES, Watermark
 
 if TYPE_CHECKING:
     from zoneinfo import ZoneInfo
@@ -17,11 +17,6 @@ if TYPE_CHECKING:
     from pyspark.sql import DataFrame, SparkSession
 
     from pyspark_cdc.capture.builder import CapturerConfiguration
-
-_int_types = {"int", "bigint", "long"}
-_datetime_types = {
-    "timestamp",
-}
 
 
 def _clear_watermark(spark: SparkSession) -> None:
@@ -51,13 +46,11 @@ def _read_watermark(dt: DeltaTable) -> Watermark:
 
 
 def _full_capture_precheck(config: CapturerConfiguration) -> None:
-
     if "table_identifier" not in config:
         raise ValueError("Specify either 'tableName' or 'location' to capture.")
 
 
 def _incremental_capture_precheck(df: DataFrame, config: CapturerConfiguration) -> None:
-
     _full_capture_precheck(config)
 
     if "primary_keys" not in config:
@@ -79,7 +72,7 @@ def _incremental_capture_precheck(df: DataFrame, config: CapturerConfiguration) 
         )
 
     _, watermark_type = df.select(watermark_column).dtypes[0]
-    if watermark_type not in _int_types and watermark_type not in _datetime_types:
+    if watermark_type not in WATERMARK_TYPES:
         raise ValueError(f"Unsupported watermark type: {watermark_type}")
 
     if "enable_null_watermark_check" in config:
@@ -95,7 +88,6 @@ def _incremental_capture_precheck(df: DataFrame, config: CapturerConfiguration) 
 def _overwrite_to_table(
     df: DataFrame, spark: SparkSession, config: CapturerConfiguration
 ) -> DeltaTable:
-
     table_identifier = config["table_identifier"]
 
     dfw = df.writeTo(table_identifier).using("delta")
@@ -104,7 +96,7 @@ def _overwrite_to_table(
         dfw = dfw.options(**config["writer_options"])
 
     if "partition_columns" in config:
-        dfw = dfw.partitionedBy(*config["partition_columns"])
+        dfw = dfw.partition_by(*config["partition_columns"])
 
     if "cluster_columns" in config:
         dfw = dfw.clusterBy(*config["cluster_columns"])
@@ -121,7 +113,6 @@ def _overwrite_to_table(
 def _overwrite_to_external_path(
     df: DataFrame, spark: SparkSession, config: CapturerConfiguration
 ) -> DeltaTable:
-
     temp_tbl_property_keys = set[str]()
 
     table_identifier = config["table_identifier"]
@@ -161,7 +152,6 @@ def _overwrite_to_external_path(
 def _full_capture(
     df: DataFrame, spark: SparkSession, config: CapturerConfiguration
 ) -> DeltaTable:
-
     _full_capture_precheck(config)
 
     if config["managed"]:
@@ -177,16 +167,16 @@ def _max_watermark(
 ) -> Watermark:
     _, watermark_type = df.select(watermark_column).dtypes[0]
     max_value = df.agg({f"{watermark_column}": "max"}).collect()[0][0]
-    logger.info(f"Raw max watermark value: {max_value }")
+    logger.info(f"Raw max watermark value: {max_value}")
 
     if max_value is None:
         raise ValueError(
             f"No valid watermark values found in column '{watermark_column}'."
         )
 
-    if watermark_type in _datetime_types and isinstance(max_value, datetime):
+    if isinstance(max_value, datetime):
         formated_max_value: str | int = max_value.astimezone(tz).isoformat()
-    elif watermark_type in _int_types and isinstance(max_value, int):
+    elif isinstance(max_value, int):
         formated_max_value = max_value
     else:
         raise ValueError(
@@ -202,12 +192,12 @@ def _generate_watermark_condition(
     col = max_watermark.column_name
 
     if min_watermark:
-        if min_watermark.type in _datetime_types:
+        if isinstance(min_watermark.value, str):
             condition = f"({col} > '{min_watermark.value}' AND {col} <= '{max_watermark.value}') OR ({col} IS NULL)"
         else:
             condition = f"({col} > {min_watermark.value} AND {col} <= {max_watermark.value}) OR ({col} IS NULL)"
     else:
-        if max_watermark.type in _datetime_types:
+        if isinstance(max_watermark.value, str):
             condition = f"({col} <= '{max_watermark.value}') OR ({col} IS NULL)"
         else:
             condition = f"({col} <= {max_watermark.value}) OR ({col} IS NULL)"
@@ -286,10 +276,6 @@ def _incremental_capture(
             )
 
             min_watermark = _read_watermark(dt)
-            if min_watermark.type != max_watermark.type:
-                raise ValueError(
-                    f"Watermark types do not match: {min_watermark.type} != {max_watermark.type}"
-                )
 
             if max_watermark == min_watermark:
                 logger.info(
@@ -334,10 +320,10 @@ def delta_capture(
             dt = _incremental_capture(df, spark, config)
         case _:
             raise ValueError(
-                f"Unsupported capture mode 'mode'. Supported modes are 'full' and 'incremental'."
+                "Unsupported capture mode 'mode'. Supported modes are 'full' and 'incremental'."
             )
     logger.info("✅ Delta table capture completed successfully.")
     if scheduler_switch == "ON":
-        logger.info("Running delta optimization...")
+        logger.info("🚀 Running delta optimization...")
         delta_optimize(dt, config)
     return dt

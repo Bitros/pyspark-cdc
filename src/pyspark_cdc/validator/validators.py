@@ -11,10 +11,7 @@ def columns_exist(df: DataFrame, *columns: str) -> bool:
     Check if the specified columns exist in the DataFrame.
     """
     existing_columns = {col.upper() for col in df.columns}
-    for column in columns:
-        if column.upper() not in existing_columns:
-            return False
-    return True
+    return all(column.upper() in existing_columns for column in columns)
 
 
 def null_watermarks_check(df: DataFrame, watermark_column: str) -> int:

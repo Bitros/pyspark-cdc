@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pyspark_cdc import capture
 from pyspark_cdc_test import catalog_schema, external_location
 from pyspark_cdc_test.test_utils.employee_generator import EmployeeGenerator
 from pyspark_cdc_test.test_utils.postgres_operations import (
@@ -13,10 +14,8 @@ from pyspark_cdc_test.test_utils.postgres_operations import (
     update,
 )
 
-from pyspark_cdc import capture
-
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     from delta import DeltaTable
     from pyspark.sql import DataFrame, SparkSession
@@ -32,9 +31,9 @@ def _capture_assert(
     capture_func: Callable[[DataFrame, SparkSession], DeltaTable],
 ) -> DeltaTable:
     dt = capture_func(df, spark)
-    assert (
-        df.count() == dt.toDF().count()
-    ), "DataFrame count mismatch after full capture."
+    assert df.count() == dt.toDF().count(), (
+        "DataFrame count mismatch after full capture."
+    )
     return dt
 
 
@@ -92,7 +91,7 @@ def _test_steps(
         table,
         *generator.generate(count=100),
     )
-    dt = _capture_assert(df, spark, capture_func)
+    dt = _capture_assert(df, spark, capture_func)  # noqa
 
     # dt.history().show(truncate=False)
     # dt.detail().show(truncate=False)
@@ -110,13 +109,13 @@ def managed_default_single_pk_datetime_watermark(
     """
     return (
         capture(df, spark)
-        .tableName(f"{catalog_schema}.pg_employee_spk_dw")
+        .table(f"{catalog_schema}.pg_employee_spk_dw")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID"])
-        .watermarkColumn("UPDATED_AT")
-        .enableDeletionDetect()
+        .primary_keys(["ID"])
+        .watermark_column("UPDATED_AT")
+        .enable_deletion_detect()
         .start()
     )
 
@@ -130,13 +129,13 @@ def managed_default_multiple_pk_datetime_watermark(
     """
     return (
         capture(df, spark)
-        .tableName(f"{catalog_schema}.pg_employee_mpk_dw")
+        .table(f"{catalog_schema}.pg_employee_mpk_dw")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID", "FIRST_NAME"])
-        .watermarkColumn("UPDATED_AT")
-        .enableDeletionDetect()
+        .primary_keys(["ID", "FIRST_NAME"])
+        .watermark_column("UPDATED_AT")
+        .enable_deletion_detect()
         .start()
     )
 
@@ -150,13 +149,13 @@ def managed_default_single_pk_int_watermark(
     """
     return (
         capture(df, spark)
-        .tableName(f"{catalog_schema}.pg_employee_spk_iw")
+        .table(f"{catalog_schema}.pg_employee_spk_iw")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID"])
-        .watermarkColumn("ID")
-        .enableDeletionDetect()
+        .primary_keys(["ID"])
+        .watermark_column("ID")
+        .enable_deletion_detect()
         .start()
     )
 
@@ -170,13 +169,13 @@ def managed_default_multiple_pk_int_watermark(
     """
     return (
         capture(df, spark)
-        .tableName(f"{catalog_schema}.pg_employee_mpk_iw")
+        .table(f"{catalog_schema}.pg_employee_mpk_iw")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID", "FIRST_NAME"])
-        .watermarkColumn("ID")
-        .enableDeletionDetect()
+        .primary_keys(["ID", "FIRST_NAME"])
+        .watermark_column("ID")
+        .enable_deletion_detect()
         .start()
     )
 
@@ -186,16 +185,16 @@ def managed_with_partition_zorder_single_pk_datetime_watermark(
 ) -> DeltaTable:
     return (
         capture(df, spark)
-        .tableName(f"{catalog_schema}.pg_employee_spk_dw_pz")
+        .table(f"{catalog_schema}.pg_employee_spk_dw_pz")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID"])
-        .watermarkColumn("UPDATED_AT")
-        .partitionedBy(["COUNTRY", "GENDER"])
-        .scheduleZOrder("*", ["FIRST_NAME", "SURNAME"])
-        .enableDeletionDetect()
-        .tableProperties(
+        .primary_keys(["ID"])
+        .watermark_column("UPDATED_AT")
+        .partition_by(["COUNTRY", "GENDER"])
+        .schedule_zorder("*", ["FIRST_NAME", "SURNAME"])
+        .enable_deletion_detect()
+        .table_properties(
             {
                 "delta.deletedFileRetentionDuration": "interval 1 day",
                 "delta.logRetentionDuration": "interval 1 day",
@@ -224,11 +223,11 @@ def external_default_single_pk_datetime_watermark(
         capture(df, spark)
         .location(f"{external_location}/pg_employee_spk_dw")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID"])
-        .watermarkColumn("UPDATED_AT")
-        .enableDeletionDetect()
+        .primary_keys(["ID"])
+        .watermark_column("UPDATED_AT")
+        .enable_deletion_detect()
         .start()
     )
 
@@ -244,11 +243,11 @@ def external_default_multiple_pk_datetime_watermark(
         capture(df, spark)
         .location(f"{external_location}/pg_employee_mpk_dw")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID", "FIRST_NAME"])
-        .watermarkColumn("UPDATED_AT")
-        .enableDeletionDetect()
+        .primary_keys(["ID", "FIRST_NAME"])
+        .watermark_column("UPDATED_AT")
+        .enable_deletion_detect()
         .start()
     )
 
@@ -264,11 +263,11 @@ def external_default_single_pk_int_watermark(
         capture(df, spark)
         .location(f"{external_location}/pg_employee_spk_iw")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID"])
-        .watermarkColumn("ID")
-        .enableDeletionDetect()
+        .primary_keys(["ID"])
+        .watermark_column("ID")
+        .enable_deletion_detect()
         .start()
     )
 
@@ -284,11 +283,11 @@ def external_default_multiple_pk_int_watermark(
         capture(df, spark)
         .location(f"{external_location}/pg_employee_mpk_iw")
         .mode("incremental")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
-        .primaryKeys(["ID", "FIRST_NAME"])
-        .watermarkColumn("ID")
-        .enableDeletionDetect()
+        .primary_keys(["ID", "FIRST_NAME"])
+        .watermark_column("ID")
+        .enable_deletion_detect()
         .start()
     )
 
@@ -300,14 +299,13 @@ def external_with_partition_zorder_single_pk_datetime_watermark(
         capture(df, spark)
         .location(f"{external_location}/pg_employee_spk_dw_pz")
         .mode("incremental")
-        .logLevel("DEBUG")
         .format("delta")
-        .primaryKeys(["ID"])
-        .watermarkColumn("UPDATED_AT")
-        .partitionedBy(["COUNTRY", "GENDER"])
-        .scheduleZOrder("1-31", ["FIRST_NAME", "SURNAME"])
-        .enableDeletionDetect()
-        .tableProperties(
+        .primary_keys(["ID"])
+        .watermark_column("UPDATED_AT")
+        .partition_by(["COUNTRY", "GENDER"])
+        .schedule_zorder("1-31", ["FIRST_NAME", "SURNAME"])
+        .enable_deletion_detect()
+        .table_properties(
             {
                 "delta.deletedFileRetentionDuration": "interval 1 day",
                 "delta.logRetentionDuration": "interval 1 day",

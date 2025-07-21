@@ -39,18 +39,20 @@ class CapturerBuilder:
         self.spark = spark
         self.config = CapturerConfiguration()
         # set defaults
-        self.config["timezone"] = ZoneInfo(
-            self.spark.conf.get("spark.sql.session.timeZone")
-        )
+        tz = self.spark.conf.get("spark.sql.session.timeZone")
+        if tz:
+            self.config["timezone"] = ZoneInfo(tz)
+        else:
+            self.config["timezone"] = ZoneInfo("Etc/UTC")
         self.config["format"] = "delta"
         self.config["scheduler_switch"] = "ON"
 
-    def tableName(self, table_name: str) -> CapturerBuilder:
+    def table(self, table: str) -> CapturerBuilder:
         """
         Set the target table name for managed tables.
 
         Args:
-            table_name (str): The name of the managed table.
+            table (str): The name of the managed table.
 
         Returns:
             CapturerBuilder: The builder instance for chaining.
@@ -59,7 +61,7 @@ class CapturerBuilder:
             raise ValueError(
                 "Cannot set both table name and location. Use either 'tableName' or 'location'."
             )
-        self.config["table_identifier"] = table_name
+        self.config["table_identifier"] = table
         self.config["managed"] = True
         return self
 
@@ -101,7 +103,7 @@ class CapturerBuilder:
         self.config["managed"] = False
         return self
 
-    def partitionedBy(self, cols: list[str]) -> CapturerBuilder:
+    def partition_by(self, cols: list[str]) -> CapturerBuilder:
         """
         Set partition columns for the target table.
 
@@ -121,7 +123,7 @@ class CapturerBuilder:
         self.config["partition_columns"] = cols
         return self
 
-    def clusterBy(self, cols: list[str]) -> CapturerBuilder:
+    def cluster_by(self, cols: list[str]) -> CapturerBuilder:
         """
         Set cluster columns for the target table.
 
@@ -146,7 +148,7 @@ class CapturerBuilder:
         self.config["cluster_columns"] = cols
         return self
 
-    def tableProperties(self, props: dict[str, str]) -> CapturerBuilder:
+    def table_properties(self, props: dict[str, str]) -> CapturerBuilder:
         """
         Set table properties.
 
@@ -185,7 +187,7 @@ class CapturerBuilder:
         self.config["format"] = format
         return self
 
-    def primaryKeys(self, primary_keys: list[str]) -> CapturerBuilder:
+    def primary_keys(self, primary_keys: list[str]) -> CapturerBuilder:
         """
         Set primary keys for incremental capture mode.
 
@@ -198,7 +200,7 @@ class CapturerBuilder:
         self.config["primary_keys"] = primary_keys
         return self
 
-    def watermarkColumn(self, watermark_column: str) -> CapturerBuilder:
+    def watermark_column(self, watermark_column: str) -> CapturerBuilder:
         """
         Set the watermark column for incremental capture mode.
 
@@ -211,7 +213,7 @@ class CapturerBuilder:
         self.config["watermark_column"] = watermark_column
         return self
 
-    def enableDeletionDetect(self) -> CapturerBuilder:
+    def enable_deletion_detect(self) -> CapturerBuilder:
         """
         Enable deletion detection for incremental capture mode.
 
@@ -221,7 +223,7 @@ class CapturerBuilder:
         self.config["enable_deletion_detect"] = True
         return self
 
-    def enableNullWatermarkCheck(self) -> CapturerBuilder:
+    def enable_null_watermark_check(self) -> CapturerBuilder:
         """
         Enable null watermark check.
 
@@ -243,7 +245,7 @@ class CapturerBuilder:
             lines.append(f"  {key}: {value}")
         return "\n".join(lines)
 
-    def scheduleVacuum(self, cron: str) -> CapturerBuilder:
+    def schedule_vacuum(self, cron: str) -> CapturerBuilder:
         """
         Schedule vacuum operation using a cron expression.
 
@@ -256,7 +258,7 @@ class CapturerBuilder:
         self.config["vacuum_cron"] = cron
         return self
 
-    def scheduleZOrder(self, cron: str, cols: list[str]) -> CapturerBuilder:
+    def schedule_zorder(self, cron: str, cols: list[str]) -> CapturerBuilder:
         """
         Schedule Z-Order operation using a cron expression and columns.
 
@@ -278,7 +280,7 @@ class CapturerBuilder:
         self.config["z_order_cron"] = cron
         return self
 
-    def scheduleCompaction(self, cron: str) -> CapturerBuilder:
+    def schedule_compaction(self, cron: str) -> CapturerBuilder:
         """
         Schedule compaction operation using a cron expression.
 
@@ -291,7 +293,7 @@ class CapturerBuilder:
         self.config["compaction_cron"] = cron
         return self
 
-    def logLevel(self, level: str) -> CapturerBuilder:
+    def log_level(self, level: str) -> CapturerBuilder:
         """
         Set the log level for the capture process.
 
@@ -318,7 +320,7 @@ class CapturerBuilder:
         self.spark.conf.set("spark.sql.session.timeZone", tz)
         return self
 
-    def schedulerSwitch(self, switch: str) -> CapturerBuilder:
+    def scheduler_switch(self, switch: str) -> CapturerBuilder:
         """
         Set the scheduler switch for the capture process.
 

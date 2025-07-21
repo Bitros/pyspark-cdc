@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pyspark.sql.functions import col, concat, lit
+
+from pyspark_cdc import capture
 from pyspark_cdc_test import catalog_schema, external_location
 from pyspark_cdc_test.test_utils.dataframe_operations import (
     add_column,
@@ -12,10 +14,8 @@ from pyspark_cdc_test.test_utils.dataframe_operations import (
 )
 from pyspark_cdc_test.test_utils.employee_generator import EmployeeGenerator
 
-from pyspark_cdc import capture
-
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     from delta import DeltaTable
     from pyspark.sql import DataFrame, SparkSession
@@ -31,9 +31,9 @@ def _capture_assert(
     capture_func: Callable[[DataFrame, SparkSession], DeltaTable],
 ) -> DeltaTable:
     dt = capture_func(df, spark)
-    assert (
-        df.count() == dt.toDF().count()
-    ), "DataFrame count mismatch after full capture."
+    assert df.count() == dt.toDF().count(), (
+        "DataFrame count mismatch after full capture."
+    )
     return dt
 
 
@@ -67,7 +67,7 @@ def _test_steps(
     df = add_column(
         df, "FULL_NAME", concat(col("FIRST_NAME"), lit(" "), col("SURNAME"))
     )
-    dt = _capture_assert(df, spark, capture_func)
+    dt = _capture_assert(df, spark, capture_func)  # noqa
 
     # dt.history().show(truncate=False)
     # dt.detail().show(truncate=False)
@@ -79,9 +79,9 @@ def _test_steps(
 def managed_default(df: DataFrame, spark: SparkSession) -> DeltaTable:
     return (
         capture(df, spark)
-        .tableName(f"{catalog_schema}.employee")
+        .table(f"{catalog_schema}.employee")
         .mode("full")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
         .start()
     )
@@ -90,13 +90,12 @@ def managed_default(df: DataFrame, spark: SparkSession) -> DeltaTable:
 def managed_with_partition_zorder(df: DataFrame, spark: SparkSession) -> DeltaTable:
     return (
         capture(df, spark)
-        .tableName(f"{catalog_schema}.employee")
+        .table(f"{catalog_schema}.employee")
         .mode("full")
-        # .partitionedBy(["COUNTRY", "GENDER"])
-        .scheduleZOrder("*", ["FIRST_NAME", "SURNAME"])
+        # .partition_by(["COUNTRY", "GENDER"])
+        .schedule_zorder("*", ["FIRST_NAME", "SURNAME"])
         .format("delta")
-        .logLevel("DEBUG")
-        .tableProperties(
+        .table_properties(
             {
                 "delta.deletedFileRetentionDuration": "interval 1 day",
                 "delta.logRetentionDuration": "interval 1 day",
@@ -119,7 +118,7 @@ def external_default(df: DataFrame, spark: SparkSession) -> DeltaTable:
         capture(df, spark)
         .location(f"{external_location}/employee")
         .mode("full")
-        .logLevel("DEBUG")
+        .log_level("DEBUG")
         .format("delta")
         .start()
     )
@@ -130,11 +129,11 @@ def external_with_partition_zorder(df: DataFrame, spark: SparkSession) -> DeltaT
         capture(df, spark)
         .location(f"{external_location}/employee")
         .mode("full")
-        .partitionedBy(["COUNTRY", "GENDER"])
-        .scheduleZOrder("1-31", ["FIRST_NAME", "SURNAME"])
+        .partition_by(["COUNTRY", "GENDER"])
+        .schedule_zorder("1-31", ["FIRST_NAME", "SURNAME"])
         .format("delta")
-        .logLevel("DEBUG")
-        .tableProperties(
+        .log_level("DEBUG")
+        .table_properties(
             {
                 "delta.deletedFileRetentionDuration": "interval 1 day",
                 "delta.logRetentionDuration": "interval 1 day",

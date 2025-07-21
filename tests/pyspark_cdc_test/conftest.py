@@ -10,7 +10,7 @@ from delta import configure_spark_with_delta_pip
 from pyspark.sql import SparkSession
 
 if TYPE_CHECKING:
-    from typing import Generator
+    from collections.abc import Generator
 
 extra_driver_packages = ["org.postgresql:postgresql:42.7.7"]
 
