@@ -14,7 +14,7 @@ from pyspark_cdc.watermark import WATERMARK_TYPES, Watermark
 if TYPE_CHECKING:
     from zoneinfo import ZoneInfo
 
-    from pyspark.sql import DataFrame, SparkSession
+    from pyspark.sql import DataFrame, DataFrameWriter, DataFrameWriterV2, SparkSession
 
     from pyspark_cdc.capture.builder import CapturerConfiguration
 
@@ -90,13 +90,13 @@ def _overwrite_to_table(
 ) -> DeltaTable:
     table_identifier = config["table_identifier"]
 
-    dfw = df.writeTo(table_identifier).using("delta")
+    dfw: DataFrameWriterV2 = df.writeTo(table_identifier).using("delta")
 
     if "writer_options" in config:
         dfw = dfw.options(**config["writer_options"])
 
     if "partition_columns" in config:
-        dfw = dfw.partition_by(*config["partition_columns"])
+        dfw = dfw.partitionedBy(*config["partition_columns"])
 
     if "cluster_columns" in config:
         dfw = dfw.clusterBy(*config["cluster_columns"])
@@ -117,7 +117,9 @@ def _overwrite_to_external_path(
 
     table_identifier = config["table_identifier"]
 
-    dfw = df.write.format("delta").mode("overwrite").option("overwriteSchema", True)
+    dfw: DataFrameWriter = (
+        df.write.format("delta").mode("overwrite").option("overwriteSchema", True)
+    )
 
     if "writer_options" in config:
         dfw = dfw.options(**config["writer_options"])
