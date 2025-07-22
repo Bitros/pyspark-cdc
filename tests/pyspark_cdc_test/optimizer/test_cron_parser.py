@@ -117,55 +117,58 @@ def test_boundary_values() -> None:
 
 
 def test_empty_expression_raises_error() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Expression cannot be empty"):
         parse_day_of_month("")
 
-    with pytest.raises(ValueError):
-        parse_day_of_month(None)  # type: ignore
+    with pytest.raises(ValueError, match="Expression cannot be empty"):
+        parse_day_of_month(None)  # type: ignore[arg-type]
 
 
 def test_empty_segment_raises_error() -> None:
     """Test that empty segments raise ValueError."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Expression contains empty part"):
         parse_day_of_month("1,,5")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Expression contains empty part"):
         parse_day_of_month("1, ,5")
 
 
 def test_invalid_step_raises_error() -> None:
     """Test that invalid step values raise ValueError."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Step must be greater than 0"):
         parse_day_of_month("*/0")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Step must be greater than 0"):
         parse_day_of_month("*/-1")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Step must be greater than 0"):
         parse_day_of_month("1-10/0")
 
 
 def test_invalid_range_format_raises_error() -> None:
     """Test that invalid range formats raise ValueError."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid range format"):
         parse_day_of_month("5/2")  # Step without proper range
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid day value"):
         parse_day_of_month("abc")  # Non-numeric values
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid range format"):
         parse_day_of_month("1-")  # Incomplete range
 
 
 def test_invalid_numeric_values_raise_error() -> None:
     """Test that invalid numeric values raise ValueError."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Day must be between 1 and 31"):
         parse_day_of_month("0")  # Day 0 doesn't exist
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Day must be between 1 and 31"):
         parse_day_of_month("32")  # Day 32 doesn't exist
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Start must be between 1 and 31"):
+        parse_day_of_month("0-31")  # Range exceeds valid days
+
+    with pytest.raises(ValueError, match="End must be between 1 and 31"):
         parse_day_of_month("1-35")  # Range exceeds valid days
 
 
@@ -189,7 +192,7 @@ def test_duplicate_values_are_handled() -> None:
 
 def test_reverse_range_raises_error() -> None:
     """Test that reverse ranges raise appropriate errors."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Start cannot be greater than end"):
         parse_day_of_month("10-5")  # End before start
 
 

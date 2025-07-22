@@ -171,7 +171,7 @@ def _max_watermark(
     max_value = df.agg({f"{watermark_column}": "max"}).collect()[0][0]
     logger.info(f"Raw max watermark value: {max_value}")
 
-    if max_value is None:
+    if not max_value:
         raise ValueError(
             f"No valid watermark values found in column '{watermark_column}'."
         )
@@ -182,7 +182,7 @@ def _max_watermark(
         formated_max_value = max_value
     else:
         raise ValueError(
-            f"Unsupported watermark type '{watermark_type}' or mismatched value: {max_value}"
+            f"Unsupported watermark type '{watermark_type}'. Expected datetime or int."
         )
 
     return Watermark(table, watermark_column, formated_max_value, watermark_type)
@@ -286,7 +286,7 @@ def _incremental_capture(
             elif max_watermark < min_watermark:
                 logger.info(
                     f"Max watermark {max_watermark.value} is less than the min watermark {min_watermark.value}. "
-                    "Maybe delete actions happened in source side. Make sure you used 'enableDeletionDetect' to capture."
+                    "Maybe delete actions happened in source side. Make sure you used 'enable_deletion_detect' to capture."
                 )
             else:
                 condition = _generate_watermark_condition(max_watermark, min_watermark)

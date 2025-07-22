@@ -76,12 +76,14 @@ extend-select = [
     "I",
     "N",
     "PIE",
+    "PT",
     "RUF",
     "SIM",
     "T20",
     "TC",
     "TID",
     "UP",
+    "W",
 ]
 extend-safe-fixes = [
     "TC",
