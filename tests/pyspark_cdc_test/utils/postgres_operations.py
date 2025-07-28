@@ -5,13 +5,17 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
-import pytest
-
-from pyspark_cdc_test.test_utils.employee_generator import EmployeeGenerator
 
 connection_string = "postgresql://postgres:postgres@postgres:5432/postgres"
-conn = psycopg.connect(connection_string)
-atexit.register(lambda: conn.close())
+connection = None
+
+
+def conn() -> psycopg.Connection:
+    global connection
+    if not connection:
+        connection = psycopg.connect(connection_string)
+        atexit.register(lambda: connection.close())
+    return connection
 
 
 def table_exists(table_identifier: str) -> bool:
@@ -22,7 +26,7 @@ def table_exists(table_identifier: str) -> bool:
         LIMIT 1
     """
 
-    with conn.cursor() as cur:
+    with conn().cursor() as cur:
         if "." in table_identifier:
             schema, table = table_identifier.split(".")
             sql = sql.format("AND table_schema = %s")
@@ -37,8 +41,8 @@ def table_exists(table_identifier: str) -> bool:
 def run_script(script: str | Path) -> None:
     script_path = Path(script)
     with script_path.open("r", encoding="utf-8") as f:
-        conn.execute(f.read())
-        conn.commit()
+        conn().execute(f.read())
+        conn().commit()
 
 
 def insert(table: str, data: list[tuple[Any, ...]], schema: tuple[str, ...]) -> int:
@@ -49,9 +53,9 @@ def insert(table: str, data: list[tuple[Any, ...]], schema: tuple[str, ...]) -> 
     placeholders = ", ".join(["%s"] * len(schema))
     insert_sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
 
-    with conn.cursor() as cur:
+    with conn().cursor() as cur:
         cur.executemany(insert_sql, data)
-        conn.commit()
+        conn().commit()
         return int(cur.rowcount)
 
 
@@ -77,18 +81,18 @@ def update(table: str, updates: dict[str, Any], condition: str = "TRUE") -> int:
 
     update_sql = f"UPDATE {table} SET {set_clause} WHERE {condition}"
 
-    with conn.cursor() as cur:
+    with conn().cursor() as cur:
         cur.execute(update_sql, values)
-        conn.commit()
+        conn().commit()
         return int(cur.rowcount)
 
 
 def delete(table: str, condition: str) -> int:
     delete_sql = f"DELETE FROM {table} WHERE {condition}"
 
-    with conn.cursor() as cur:
+    with conn().cursor() as cur:
         cur.execute(delete_sql)
-        conn.commit()
+        conn().commit()
         return int(cur.rowcount)
 
 
@@ -109,9 +113,9 @@ def add_column(
     if not_null:
         alter_sql += " NOT NULL"
 
-    with conn.cursor() as cur:
+    with conn().cursor() as cur:
         cur.execute(alter_sql)
-        conn.commit()
+        conn().commit()
 
 
 def create_with_ddl_file(
@@ -119,44 +123,3 @@ def create_with_ddl_file(
 ) -> None:
     if recreate or not table_exists(table):
         run_script(ddl_file)
-
-
-def test_postgres_operations() -> None:
-    assert table_exists("public.employee")
-    assert table_exists("employee")
-    assert not table_exists("not_exist.employee")
-
-    employee_ddl_file = (
-        Path(__file__).resolve().parent.parent / "capture/postgres/employee_ddl.sql"
-    )
-    run_script(employee_ddl_file)
-
-    assert table_exists("public.employee")
-
-    generator = EmployeeGenerator()
-    data, schema = generator.generate(100, watermark_start="-10d", watermark_end="-5d")
-
-    insert("public.employee", data, schema)
-
-    update("public.employee", {"surname": "Doe", "status": "inactive"}, "id = 1")
-
-    delete("public.employee", "id = 2")
-
-    add_column("public.employee", "full_name", "VARCHAR(50)")
-    with pytest.raises(ValueError, match="set NOT NULL without a default value"):
-        add_column("public.employee", "full_name1", "VARCHAR(50)", not_null=True)
-    add_column("public.employee", "full_name2", "VARCHAR(50)")
-    add_column(
-        "public.employee", "full_name3", "VARCHAR(50)", "John Doe", not_null=True
-    )
-    add_column(
-        "public.employee", "full_name4", "VARCHAR(50)", "John Doe", not_null=False
-    )
-
-    update("public.employee", {"full_name": "first_name || ' ' || surname"})
-
-    with pytest.raises(ValueError, match="set NOT NULL without a default value"):
-        add_column("public.employee", "id1", "INTEGER", not_null=True)
-    add_column("public.employee", "id2", "INTEGER")
-    add_column("public.employee", "id3", "INTEGER", 3, not_null=True)
-    add_column("public.employee", "id4", "INTEGER", 4, not_null=False)

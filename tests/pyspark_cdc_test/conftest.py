@@ -22,6 +22,7 @@ def create_spark_delta_enabled_session(
         SparkSession.builder.appName(app_name)
         .master("local[*]")
         .config("spark.ui.enabled", "false")
+        .config("spark.ui.showConsoleProgress", "false")
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config(
             "spark.sql.catalog.spark_catalog",

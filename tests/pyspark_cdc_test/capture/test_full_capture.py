@@ -6,13 +6,13 @@ from pyspark.sql.functions import col, concat, lit
 
 from pyspark_cdc import capture
 from pyspark_cdc_test import catalog_schema, external_location
-from pyspark_cdc_test.test_utils.dataframe_operations import (
+from pyspark_cdc_test.utils.dataframe_operations import (
     add_column,
     delete,
     insert,
     update,
 )
-from pyspark_cdc_test.test_utils.employee_generator import EmployeeGenerator
+from pyspark_cdc_test.utils.employee_generator import EmployeeGenerator
 
 if TYPE_CHECKING:
     from collections.abc import Callable

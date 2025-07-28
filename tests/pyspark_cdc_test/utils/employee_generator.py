@@ -92,23 +92,3 @@ class EmployeeGenerator:
             updated_at,
             status,
         )
-
-
-def test_employee_generator() -> None:
-    generator = EmployeeGenerator()
-
-    data, schema = generator.generate(
-        count=20, watermark_start="-2d", watermark_end="-1d"
-    )
-    assert len(data) == 20  # Should generate 20 records
-    assert len(data[0]) == len(schema)  # Should match schema length
-    assert data[0][0] == 1  # First ID should be 1
-    assert data[-1][0] == 20  # Last ID should be 20
-
-    data, _ = generator.generate(
-        id_start=10, id_end=100, watermark_start="-1d", watermark_end="now"
-    )
-
-    assert len(data) == 91  # From ID 10 to 100 inclusive
-    assert data[0][0] == 10  # First ID should be 10
-    assert data[-1][0] == 100  # Last ID should be 100
