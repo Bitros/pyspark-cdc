@@ -33,7 +33,7 @@ class Watermark:
                 f"\n'{self.type}' to '{other.type}'"
             )
 
-    def _formated_value(self) -> int | float:
+    def _formatted_value(self) -> int | float:
         if isinstance(self.value, int):
             return self.value
         elif isinstance(self.value, str):
@@ -47,20 +47,20 @@ class Watermark:
                 f"Can't compare '{type(self).__name__}' to '{type(other).__name__}'"
             )
         self._cmp_check(other)
-        return self._formated_value() == other._formated_value()
+        return self._formatted_value() == other._formatted_value()
 
     def __le__(self, other: Watermark) -> bool:
         self._cmp_check(other)
-        return self._formated_value() <= other._formated_value()
+        return self._formatted_value() <= other._formatted_value()
 
     def __lt__(self, other: Watermark) -> bool:
         self._cmp_check(other)
-        return self._formated_value() < other._formated_value()
+        return self._formatted_value() < other._formatted_value()
 
     def __ge__(self, other: Watermark) -> bool:
         self._cmp_check(other)
-        return self._formated_value() >= other._formated_value()
+        return self._formatted_value() >= other._formatted_value()
 
     def __gt__(self, other: Watermark) -> bool:
         self._cmp_check(other)
-        return self._formated_value() > other._formated_value()
+        return self._formatted_value() > other._formatted_value()

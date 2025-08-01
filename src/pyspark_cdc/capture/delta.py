@@ -47,7 +47,7 @@ def _read_watermark(dt: DeltaTable) -> Watermark:
 
 def _full_capture_precheck(config: CapturerConfiguration) -> None:
     if "table_identifier" not in config:
-        raise ValueError("Specify either 'tableName' or 'location' to capture.")
+        raise ValueError("Specify either 'table()' or 'location()' to capture.")
 
 
 def _incremental_capture_precheck(df: DataFrame, config: CapturerConfiguration) -> None:
@@ -177,15 +177,15 @@ def _max_watermark(
         )
 
     if isinstance(max_value, datetime):
-        formated_max_value: str | int = max_value.astimezone(tz).isoformat()
+        formatted_max_value: str | int = max_value.astimezone(tz).isoformat()
     elif isinstance(max_value, int):
-        formated_max_value = max_value
+        formatted_max_value = max_value
     else:
         raise ValueError(
             f"Unsupported watermark type '{watermark_type}'. Expected datetime or int."
         )
 
-    return Watermark(table, watermark_column, formated_max_value, watermark_type)
+    return Watermark(table, watermark_column, formatted_max_value, watermark_type)
 
 
 def _generate_watermark_condition(

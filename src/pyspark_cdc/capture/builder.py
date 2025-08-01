@@ -59,7 +59,7 @@ class CapturerBuilder:
         """
         if "table_identifier" in self.config:
             raise ValueError(
-                "Cannot set both table name and location. Use either 'tableName' or 'location'."
+                "Cannot set both table name and location. Use either 'table()' or 'location()'."
             )
         self.config["table_identifier"] = table
         self.config["managed"] = True
@@ -97,7 +97,7 @@ class CapturerBuilder:
         """
         if "table_identifier" in self.config:
             raise ValueError(
-                "Cannot set both table name and location. Use either 'tableName' or 'location'."
+                "Cannot set both table name and location. Use either 'table()' or 'location()'."
             )
         self.config["table_identifier"] = location
         self.config["managed"] = False

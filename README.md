@@ -9,10 +9,9 @@ A Python library for Change Data Capture (CDC) workflows using PySpark. This pro
 
 ## Features
 - Full and incremental data capture.
-- Delta optimization for efficient processing.
-- Cron-based scheduling utilities.
-- No extra configurations.
-- Use inerntal [`commitInfo.userMetadata`](https://docs.databricks.com/aws/en/delta/custom-metadata) to store watermark.
+- Cron-based scheduling utilities for Delta optimizations.
+- No extra dependencies.
+- Use internal [`commitInfo.userMetadata`](https://docs.databricks.com/aws/en/delta/custom-metadata) to store watermark.
 
 ## Installation
 
@@ -25,7 +24,7 @@ pip install pyspark-cdc
 
 ## Usage
 
-Let's assume that there is a table in PostgreSQL Database. Use this module to capture as a managed delta table.
+Let's assume that there is a table in a PostgreSQL database. Use this module to capture it as a managed delta table.
 
 ```python
 from pyspark_cdc import capture
@@ -39,19 +38,19 @@ df = (
         dbtable=f"{postgresql_schema}.{postgresql_table}",
         user=f"{postgresql_user}",
         password=f"{postgresql_password}",
-        driver="org.postgresql.Driver", # Ensure the required JDBC driver file is available to Spark.
+        driver="org.postgresql.Driver",                # Ensure JDBC Driver JAR is in Spark.
     )
     .load()
 )
 # quick start
 (
     capture(df, spark)
-    .table(f"{catalog}.{database}.{table_name}")    # managed table name
+    .table(f"{catalog}.{database}.{table_name}")       # managed table name
     .mode("incremental")
     .format("delta")
-    .primary_keys(["ID"])                                # PK
-    .watermark_column("UPDATED_AT")                      # Watermark column
-    .enable_deletion_detect()                             # detect DELETE operations
+    .primary_keys(["ID"])                              # PK
+    .watermark_column("UPDATED_AT")                    # Watermark column
+    .enable_deletion_detect()                          # detect DELETE operations
     .start()
 )
 # With more
@@ -62,11 +61,11 @@ df = (
     .format("delta")
     .primary_keys(["ID"])
     .watermark_column("UPDATED_AT")
-    .partition_by(["COUNTRY", "GENDER"])             # partitoning
+    .partition_by(["COUNTRY", "GENDER"])               # partitioning
     .schedule_zorder("*/3", ["FIRST_NAME", "SURNAME"]) # run z-order every 3 days
-    .schedule_vacuum("5,20")                           # run vaccum on 5th and 20th every month
+    .schedule_vacuum("5,20")                           # run vacuum on 5th and 20th every month
     .schedule_compaction("10-25")                      # run compaction every day between 5th and 25th every month
-    .enable_deletion_detect()                           # detect hard delete operations in source side
+    .enable_deletion_detect()                          # detect hard delete operations in source side
     .table_properties(                                 # extra delta table properties
         {
             "delta.deletedFileRetentionDuration": "interval 3 day",
@@ -101,7 +100,7 @@ The following table summarizes common use cases:
 
 | Mode        | Primary Key         | Watermark Column | Example Usage                                                                                                                  | Comment                                               |
 |-------------|---------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| Full        | No                  | No               | ...<br>.mode("full")<br>.format("delta")<br>...                                                                                | No auto incremental PK or watermark, it better to add watermark column for big tables.                   |
+| Full        | No                  | No               | ...<br>.mode("full")<br>.format("delta")<br>...                                                                                | No auto incremental PK or watermark, it's better to add watermark column for big tables.                   |
 | Incremental | Single              | Yes (datetime)   | ...<br>.mode("incremental")<br>.primary_keys(["ID"])<br>.watermark_column("UPDATED_AT")<br>.format("delta")<br>...               | Common case.                                           |
 | Incremental | Auto Incremental PK | No               | ...<br>.mode("incremental")<br>.primary_keys(["ID"])<br>.watermark_column("ID")<br>.format("delta")<br>...                       | Use auto incremental PK as watermark, **but cannot capture `UPDATE` operations.**                |
 | Incremental | Multi               | Yes (datetime)   | ...<br>.mode("incremental")<br>.primary_keys(["ID", "FIRST_NAME"])<br>.watermark_column("UPDATED_AT")<br>.format("delta")<br>... | Common case.                                           |
