@@ -43,8 +43,8 @@ packages = [
 pyspark = "^4.0.0"
 delta-spark = "^4.0.0"
 mypy = "^1.17.1"
-pre-commit = "^4.2.0"
-ruff = "^0.12.7"
+pre-commit = "^4.3.0"
+ruff = "^0.12.8"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.4.0"
