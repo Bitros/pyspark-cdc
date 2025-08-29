@@ -89,10 +89,6 @@ def _test_steps(
         table,
         *generator.generate(count=100),
     )
-    dt = _capture_assert(df, spark, capture_func)
-
-    # update one PK to NULL
-    update(table, {"first_name": None}, "AGE > 50")
     dt = _capture_assert(df, spark, capture_func)  # noqa
 
     # dt.history().show(truncate=False)

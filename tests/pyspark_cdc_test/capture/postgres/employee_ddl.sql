@@ -11,7 +11,7 @@ CREATE TABLE employee (
     -- Employee personal information
     first_name VARCHAR(100),
     surname VARCHAR(100),
-    gender CHAR(1) CHECK (gender IN ('M', 'F', 'O')),
+    gender CHAR(1) DEFAULT 'O' CHECK (gender IN ('M', 'F', 'O')),
     age INTEGER,
 
     -- Contact information

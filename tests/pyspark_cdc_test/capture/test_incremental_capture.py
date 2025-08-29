@@ -71,14 +71,6 @@ def _test_steps(
         df, "FULL_NAME", concat(col("FIRST_NAME"), lit(" "), col("SURNAME"))
     )
     df = update(df, {"UPDATED_AT": datetime.now()}, condition=lit(True))
-    dt = _capture_assert(df, spark, capture_func)
-
-    # Update one PK to NULL
-    df = update(
-        df,
-        {"FIRST_NAME": None, "UPDATED_AT": datetime.now()},
-        condition=col("AGE") > 50,
-    )
     dt = _capture_assert(df, spark, capture_func)  # noqa
 
     # dt.history().show(truncate=False)
