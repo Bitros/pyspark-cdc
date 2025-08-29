@@ -1,6 +1,6 @@
 [project]
 name = "pyspark-cdc"
-version = "0.2.0"
+version = "0.4.0"
 description = "A Python library for Change Data Capture (CDC) workflows using PySpark and Delta Lake."
 authors = [
     {name = "Bitros Wang",email = "mopspecial@gmail.com"}

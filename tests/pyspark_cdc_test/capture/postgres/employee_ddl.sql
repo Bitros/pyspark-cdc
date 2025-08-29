@@ -6,23 +6,23 @@ CREATE TABLE employee (
     id INTEGER PRIMARY KEY,
 
     -- Country code (2-character ISO code)
-    country VARCHAR(2) NOT NULL,
+    country VARCHAR(2),
 
     -- Employee personal information
-    first_name VARCHAR(100) NOT NULL,
-    surname VARCHAR(100) NOT NULL,
-    gender CHAR(1) NOT NULL CHECK (gender IN ('M', 'F', 'O')),
-    age INTEGER NOT NULL,
+    first_name VARCHAR(100),
+    surname VARCHAR(100),
+    gender CHAR(1) CHECK (gender IN ('M', 'F', 'O')),
+    age INTEGER,
 
     -- Contact information
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
 
     -- Audit timestamps
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
 
     -- Employee status
-    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive'))
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive'))
 );
 
 CREATE OR REPLACE FUNCTION update_employee_updated_at()
