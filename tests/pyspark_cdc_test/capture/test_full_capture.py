@@ -31,9 +31,7 @@ def _capture_assert(
     capture_func: Callable[[DataFrame, SparkSession], DeltaTable],
 ) -> DeltaTable:
     dt = capture_func(df, spark)
-    assert df.count() == dt.toDF().count(), (
-        "DataFrame count mismatch after full capture."
-    )
+    assert df.count() == dt.toDF().count(), "DataFrame count mismatch after capture."
     return dt
 
 

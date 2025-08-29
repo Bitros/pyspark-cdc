@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from delta import DeltaTable
+from pyspark.sql.functions import coalesce, lit
 
 from pyspark_cdc.capture.logger import logger
 from pyspark_cdc.optimizer import delta_optimize
@@ -228,6 +229,14 @@ def _replicate_deletion_to_delta_table(
     )
 
 
+def _coalesce_null_pks(
+    df: DataFrame, primary_keys: list[str], fill_value: str = "<NULL>"
+) -> DataFrame:
+    for pk in primary_keys:
+        df = df.withColumn(pk, coalesce(pk, lit(fill_value)))
+    return df
+
+
 def _incremental_capture(
     df: DataFrame, spark: SparkSession, config: CapturerConfiguration
 ) -> DeltaTable:
@@ -240,6 +249,8 @@ def _incremental_capture(
     deletion_detect = config.get("enable_deletion_detect", False)
     join_condition = " AND ".join([f"target.{pk} = source.{pk}" for pk in primary_keys])
     logger.info(f"Join condition: {join_condition}")
+
+    df = _coalesce_null_pks(df, primary_keys)
 
     max_watermark = _max_watermark(
         df, table_identifier, watermark_column, config["timezone"]
