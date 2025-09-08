@@ -40,14 +40,14 @@ packages = [
 ]
 
 [tool.poetry.group.dev.dependencies]
-pyspark = "^4.0.0"
+pyspark = "^4.0.1"
 delta-spark = "^4.0.0"
 mypy = "^1.17.1"
 pre-commit = "^4.3.0"
-ruff = "^0.12.8"
+ruff = "^0.12.12"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.4.0"
+pytest = "^8.4.2"
 faker = "^37.4.0"
 psycopg = {extras = ["binary"], version = "^3.2.9"}
 
