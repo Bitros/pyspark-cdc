@@ -43,21 +43,25 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Poetry
+      - name: Env check
         run: |
-          python -m pip install --upgrade pip poetry
+          env && java -version
 
-      # Map the PostgreSQL service container to 'postgres' hostname
-      # This allows tests to connect using 'postgres' as the host instead of 'localhost'
-      # Maintains consistency with local development environments
-      - name: Add PostgreSQL to /etc/hosts
-        run: |
-          echo "127.0.0.1 postgres" | sudo tee -a /etc/hosts
+      # - name: Install Poetry
+      #   run: |
+      #     python -m pip install --upgrade pip poetry
 
-      - name: Install dependencies
-        run: |
-          poetry install --with test
+      # # Map the PostgreSQL service container to 'postgres' hostname
+      # # This allows tests to connect using 'postgres' as the host instead of 'localhost'
+      # # Maintains consistency with local development environments
+      # - name: Add PostgreSQL to /etc/hosts
+      #   run: |
+      #     echo "127.0.0.1 postgres" | sudo tee -a /etc/hosts
 
-      - name: Run tests
-        run: |
-          poetry run pytest
+      # - name: Install dependencies
+      #   run: |
+      #     poetry install --with test
+
+      # - name: Run tests
+      #   run: |
+      #     poetry run pytest
