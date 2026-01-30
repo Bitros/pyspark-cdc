@@ -23,3 +23,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Manually manage to follow DBR LTS release cycle
+      - dependency-name: "pyspark"
+        update-types: ["version-update:semver-patch"]
+      - dependency-name: "delta-spark"
+        update-types: ["version-update:semver-patch"]
