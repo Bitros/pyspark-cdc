@@ -46,7 +46,7 @@ ruff = "^0.12.8"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.4.0"
-faker = "^37.4.0"
+faker = "^40.1.2"
 psycopg = {extras = ["binary"], version = "^3.2.9"}
 
 [build-system]
