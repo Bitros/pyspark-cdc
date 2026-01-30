@@ -98,15 +98,22 @@ See the `samples/` directory and the `tests/` folder for more usage examples and
 ## Typical Scenarios
 The following table summarizes common use cases:
 
-| Mode        | Primary Key         | Watermark Column | Example Usage                                                                                                                  | Comment                                               |
-|-------------|---------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| Full        | No                  | No               | ...<br>.mode("full")<br>.format("delta")<br>...                                                                                | No auto incremental PK or watermark, it's better to add watermark column for big tables.                   |
+| Mode        | Primary Key         | Watermark Column | Example Usage                                                                                                                    | Comment                                               |
+|-------------|---------------------|------------------|----------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
+| Full        | No need             | No need          | ...<br>.mode("full")<br>.format("delta")<br>...                                                                                  | No auto incremental PK or watermark, it's better to add watermark column for big tables.                   |
 | Incremental | Single              | Yes (datetime)   | ...<br>.mode("incremental")<br>.primary_keys(["ID"])<br>.watermark_column("UPDATED_AT")<br>.format("delta")<br>...               | Common case.                                           |
-| Incremental | Auto Incremental PK | No               | ...<br>.mode("incremental")<br>.primary_keys(["ID"])<br>.watermark_column("ID")<br>.format("delta")<br>...                       | Use auto incremental PK as watermark, **but cannot capture `UPDATE` operations.**                |
+| Incremental | Auto incremental PK | No               | ...<br>.mode("incremental")<br>.primary_keys(["ID"])<br>.watermark_column("ID")<br>.format("delta")<br>...                       | Use auto incremental PK as watermark, **but cannot capture `UPDATE` operations.**                |
 | Incremental | Multi               | Yes (datetime)   | ...<br>.mode("incremental")<br>.primary_keys(["ID", "FIRST_NAME"])<br>.watermark_column("UPDATED_AT")<br>.format("delta")<br>... | Common case.                                           |
 | Incremental | Multi               | Yes (int)        | ...<br>.mode("incremental")<br>.primary_keys(["ID", "FIRST_NAME"])<br>.watermark_column("ID")<br>.format("delta")<br>...         | Multi-column PK, Use auto incremental PK as watermark, **but cannot capture `UPDATE` operations.** |
 
 To capture `DELETE` operations, use `enable_deletion_detect()`, it will compare records at two sides based on the PK(s).
+
+## Library Version Matrix
+The version of this module follows [`Databricks Runtime LTS`](https://docs.databricks.com/aws/en/release-notes/runtime/)
+| Version|JDK|Python|Databricks Runtime|Spark| Delta Lake|
+|--------|---|------|------------------|-----|-----------|
+|v1.0.0|17|3.12|17 LTS|4.0.0|4.0.0|
+
 ## License
 
 This project is licensed under the MIT License. See [`LICENSE`](LICENSE) for details.
