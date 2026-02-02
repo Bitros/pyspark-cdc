@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from pyspark.sql.functions import col
 
 from pyspark_cdc import capture
+from pyspark_cdc_test import catalog_schema
 from pyspark_cdc_test.utils.dataframe_operations import (
     insert,
     update,
@@ -29,7 +30,7 @@ def test_null_pks(mock_spark: SparkSession, clean_up: bool) -> None:
     )
     dt = (
         capture(df, mock_spark)
-        .table("extra_test1")
+        .table(f"{catalog_schema}.extra_test1")
         .mode("incremental")
         .format("delta")
         .primary_keys(["ID", "STATUS"])
@@ -46,7 +47,7 @@ def test_null_pks(mock_spark: SparkSession, clean_up: bool) -> None:
 
     dt = (
         capture(df, mock_spark)
-        .table("extra_test1")
+        .table(f"{catalog_schema}.extra_test1")
         .mode("incremental")
         .format("delta")
         .primary_keys(["ID", "STATUS"])
