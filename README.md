@@ -112,7 +112,7 @@ To capture `DELETE` operations, use `enable_deletion_detect()`, it will compare 
 The version of this module follows [`Databricks Runtime LTS`](https://docs.databricks.com/aws/en/release-notes/runtime/)
 | Version|JDK|Python|Databricks Runtime|Spark| Delta Lake|
 |--------|---|------|------------------|-----|-----------|
-|v1.0.0|17|3.12|17 LTS|4.0.0|4.0.0|
+|1.0.0|17|3.12|17 LTS|4.0.0|4.0.0|
 
 ## License
 
