@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from pyspark_cdc_test.utils import generate_table_name
 from pyspark_cdc_test.utils.employee_generator import EmployeeGenerator
 from pyspark_cdc_test.utils.postgres_operations import (
     add_column,
@@ -36,8 +37,6 @@ def test_employee_generator() -> None:
 
 
 def test_postgres_operations() -> None:
-    assert table_exists("public.employee")
-    assert table_exists("employee")
     assert not table_exists("not_exist.employee")
 
     employee_ddl_file = (
@@ -46,6 +45,7 @@ def test_postgres_operations() -> None:
     run_script(employee_ddl_file)
 
     assert table_exists("public.employee")
+    assert table_exists("employee")
 
     generator = EmployeeGenerator()
     data, schema = generator.generate(100, watermark_start="-10d", watermark_end="-5d")
@@ -74,3 +74,7 @@ def test_postgres_operations() -> None:
     add_column("public.employee", "id2", "INTEGER")
     add_column("public.employee", "id3", "INTEGER", 3, not_null=True)
     add_column("public.employee", "id4", "INTEGER", 4, not_null=False)
+
+
+def test_generate_table_name() -> None:
+    assert generate_table_name() == "test_utils_test_generate_table_name"

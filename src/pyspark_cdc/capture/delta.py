@@ -14,7 +14,7 @@ from pyspark_cdc.watermark import WATERMARK_TYPES, Watermark
 if TYPE_CHECKING:
     from zoneinfo import ZoneInfo
 
-    from pyspark.sql import DataFrame, DataFrameWriter, DataFrameWriterV2, SparkSession
+    from pyspark.sql import DataFrame, DataFrameWriterV2, SparkSession
 
     from pyspark_cdc.capture.builder import CapturerConfiguration
 
@@ -45,14 +45,7 @@ def _read_watermark(dt: DeltaTable) -> Watermark:
     )
 
 
-def _full_capture_precheck(config: CapturerConfiguration) -> None:
-    if "table_identifier" not in config:
-        raise ValueError("Specify either 'table()' or 'location()' to capture.")
-
-
 def _incremental_capture_precheck(df: DataFrame, config: CapturerConfiguration) -> None:
-    _full_capture_precheck(config)
-
     if "primary_keys" not in config:
         raise ValueError("Primary keys must be specified for incremental capture mode.")
 
@@ -86,82 +79,31 @@ def _incremental_capture_precheck(df: DataFrame, config: CapturerConfiguration) 
 
 
 def _overwrite_to_table(
-    df: DataFrame, spark: SparkSession, config: CapturerConfiguration
+    df: DataFrame,
+    spark: SparkSession,
+    config: CapturerConfiguration,
+    replace: bool = True,
 ) -> DeltaTable:
     table_identifier = config["table_identifier"]
 
-    dfw: DataFrameWriterV2 = df.writeTo(table_identifier).using("delta")
+    dfwv2: DataFrameWriterV2 = df.writeTo(table_identifier).using("delta")
 
     if "writer_options" in config:
-        dfw = dfw.options(**config["writer_options"])
+        dfwv2 = dfwv2.options(**config["writer_options"])
 
     if "partition_columns" in config:
-        dfw = dfw.partitionedBy(*config["partition_columns"])
+        dfwv2 = dfwv2.partitionedBy(*config["partition_columns"])
 
     if "cluster_columns" in config:
-        dfw = dfw.clusterBy(*config["cluster_columns"])
+        dfwv2 = dfwv2.clusterBy(*config["cluster_columns"])
 
     if "table_properties" in config:
         for key, value in config["table_properties"].items():
-            dfw = dfw.tableProperty(key, value)
+            dfwv2 = dfwv2.tableProperty(key, value)
 
-    dfw.createOrReplace()
+    dfwv2.createOrReplace() if replace else dfwv2.create()
 
     return DeltaTable.forName(spark, table_identifier)
-
-
-def _overwrite_to_external_path(
-    df: DataFrame, spark: SparkSession, config: CapturerConfiguration
-) -> DeltaTable:
-    temp_tbl_property_keys = set[str]()
-
-    table_identifier = config["table_identifier"]
-
-    dfw: DataFrameWriter = (
-        df.write.format("delta").mode("overwrite").option("overwriteSchema", True)
-    )
-
-    if "writer_options" in config:
-        dfw = dfw.options(**config["writer_options"])
-
-    if "partition_columns" in config:
-        dfw = dfw.partitionBy(*config["partition_columns"])
-
-    if "cluster_columns" in config:
-        dfw = dfw.clusterBy(*config["cluster_columns"])
-
-    try:
-        if "table_properties" in config:
-            for key, value in config["table_properties"].items():
-                spark_conf_key = (
-                    f"spark.databricks.delta.properties.defaults.{key.split('.', 1)[1]}"
-                )
-                logger.info(f"Setting table property: {spark_conf_key} = {value}")
-                spark.conf.set(spark_conf_key, value)
-                temp_tbl_property_keys.add(spark_conf_key)
-
-        dfw.save(table_identifier)
-    except Exception as e:
-        raise e
-    finally:
-        for spark_conf_key in temp_tbl_property_keys:
-            logger.info(f"Unsetting table property: {spark_conf_key}")
-            spark.conf.unset(spark_conf_key)
-
-    return DeltaTable.forPath(spark, table_identifier)
-
-
-def _full_capture(
-    df: DataFrame, spark: SparkSession, config: CapturerConfiguration
-) -> DeltaTable:
-    _full_capture_precheck(config)
-
-    if config["managed"]:
-        dt = _overwrite_to_table(df, spark, config)
-    else:
-        dt = _overwrite_to_external_path(df, spark, config)
-
-    return dt
 
 
 def _max_watermark(
@@ -235,7 +177,6 @@ def _incremental_capture(
 
     table_identifier = config["table_identifier"]
     watermark_column = config["watermark_column"]
-    managed = config["managed"]
     primary_keys = config["primary_keys"]
     deletion_detect = config.get("enable_deletion_detect", False)
     join_condition = " AND ".join(
@@ -247,13 +188,10 @@ def _incremental_capture(
         df, table_identifier, watermark_column, config["timezone"]
     )
 
-    table_exists = (
-        spark.catalog.tableExists(table_identifier)
-        if managed
-        else DeltaTable.isDeltaTable(spark, table_identifier)
-    )
+    table_exists = spark.catalog.tableExists(table_identifier)
 
     _write_watermark(spark, max_watermark)
+
     try:
         if not table_exists:
             logger.info(
@@ -264,20 +202,11 @@ def _incremental_capture(
             logger.info(f"Capture condition for new table: {condition}")
 
             filtered_df = df.where(condition)
-            dt = (
-                _overwrite_to_table(filtered_df, spark, config)
-                if managed
-                else _overwrite_to_external_path(filtered_df, spark, config)
-            )
-
+            dt = _overwrite_to_table(filtered_df, spark, config, replace=False)
         else:
             logger.info(f"Delta table found for: {table_identifier}. Updating it.")
 
-            dt = (
-                DeltaTable.forName(spark, table_identifier)
-                if managed
-                else DeltaTable.forPath(spark, table_identifier)
-            )
+            dt = DeltaTable.forName(spark, table_identifier)
 
             min_watermark = _read_watermark(dt)
 
@@ -319,7 +248,7 @@ def delta_capture(
     scheduler_switch = config["scheduler_switch"]
     match mode:
         case "full":
-            dt = _full_capture(df, spark, config)
+            dt = _overwrite_to_table(df, spark, config)
         case "incremental":
             dt = _incremental_capture(df, spark, config)
         case _:

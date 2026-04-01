@@ -6,6 +6,7 @@ from pyspark.sql.functions import col
 
 from pyspark_cdc import capture
 from pyspark_cdc_test import catalog_schema
+from pyspark_cdc_test.utils import generate_table_name
 from pyspark_cdc_test.utils.dataframe_operations import (
     insert,
     update,
@@ -19,6 +20,7 @@ generator = EmployeeGenerator()
 
 
 def test_null_pks(mock_spark: SparkSession, clean_up: bool) -> None:
+    test_table_name = generate_table_name()
     df = mock_spark.createDataFrame(
         *generator.generate(count=20, watermark_start="-30d", watermark_end="-29d")
     )
@@ -30,7 +32,7 @@ def test_null_pks(mock_spark: SparkSession, clean_up: bool) -> None:
     )
     dt = (
         capture(df, mock_spark)
-        .table(f"{catalog_schema}.extra_test1")
+        .table(f"{catalog_schema}.{test_table_name}")
         .mode("incremental")
         .format("delta")
         .primary_keys(["ID", "STATUS"])
@@ -47,7 +49,7 @@ def test_null_pks(mock_spark: SparkSession, clean_up: bool) -> None:
 
     dt = (
         capture(df, mock_spark)
-        .table(f"{catalog_schema}.extra_test1")
+        .table(f"{catalog_schema}.{test_table_name}")
         .mode("incremental")
         .format("delta")
         .primary_keys(["ID", "STATUS"])

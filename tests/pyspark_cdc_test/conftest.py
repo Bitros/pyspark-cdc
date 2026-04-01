@@ -12,14 +12,10 @@ from pyspark.sql import SparkSession
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-extra_driver_packages = ["org.postgresql:postgresql:42.7.7"]
 
-
-def create_spark_delta_enabled_session(
-    app_name: str, extra_packages: list[str] | None = None
-) -> SparkSession:
+def create_spark_delta_enabled_session() -> SparkSession:
     return configure_spark_with_delta_pip(
-        SparkSession.builder.appName(app_name)
+        SparkSession.builder.appName("Pyspark_CDC_Test_App")
         .master("local[*]")
         .config("spark.ui.enabled", "false")
         .config("spark.ui.showConsoleProgress", "false")
@@ -33,7 +29,7 @@ def create_spark_delta_enabled_session(
             Path(__file__).parent.resolve() / "spark-warehouse",
         )
         .config("spark.local.dir", Path(__file__).parent.resolve() / "temp"),
-        extra_packages=extra_packages,
+        extra_packages=["org.postgresql:postgresql:42.7.7"],
     ).getOrCreate()
 
 
@@ -54,9 +50,7 @@ def mock_spark() -> Generator[SparkSession, None, None]:
     if databricks_runtime():
         yield SparkSession.builder.getOrCreate()
     else:
-        spark = create_spark_delta_enabled_session(
-            "Pyspark_CDC_Test_App", extra_driver_packages
-        )
+        spark = create_spark_delta_enabled_session()
         yield spark
         spark.stop()
         temp_dir = Path(__file__).parent.resolve() / "temp"

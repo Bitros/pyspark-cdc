@@ -19,11 +19,6 @@
 			]
 		}
 	},
-	"containerEnv": {
-		"http_proxy": "${localEnv:http_proxy}",
-		"https_proxy": "${localEnv:https_proxy}",
-		"no_proxy": "${localEnv:no_proxy}"
-	},
 	"runArgs": [
 		"--name",
 		"vscode_pyspark_cdc_devcontainer"

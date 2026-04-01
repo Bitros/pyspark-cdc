@@ -7,6 +7,7 @@ from pyspark.sql.functions import col, concat, lit
 
 from pyspark_cdc import capture
 from pyspark_cdc_test import catalog_schema, external_location
+from pyspark_cdc_test.utils import generate_table_name
 from pyspark_cdc_test.utils.dataframe_operations import (
     add_column,
     delete,
@@ -89,7 +90,7 @@ def managed_default_single_pk_datetime_watermark(
     """
     return (
         capture(df, spark)
-        .table(f"{catalog_schema}.employee_spk_dw")
+        .table(f"{catalog_schema}.{generate_table_name()}")
         .mode("incremental")
         .log_level("DEBUG")
         .format("delta")
@@ -109,7 +110,7 @@ def managed_default_multiple_pk_datetime_watermark(
     """
     return (
         capture(df, spark)
-        .table(f"{catalog_schema}.employee_mpk_dw")
+        .table(f"{catalog_schema}.{generate_table_name()}")
         .mode("incremental")
         .log_level("DEBUG")
         .format("delta")
@@ -129,7 +130,7 @@ def managed_default_single_pk_int_watermark(
     """
     return (
         capture(df, spark)
-        .table(f"{catalog_schema}.employee_spk_iw")
+        .table(f"{catalog_schema}.{generate_table_name()}")
         .mode("incremental")
         .log_level("DEBUG")
         .format("delta")
@@ -149,7 +150,7 @@ def managed_default_multiple_pk_int_watermark(
     """
     return (
         capture(df, spark)
-        .table(f"{catalog_schema}.employee_mpk_iw")
+        .table(f"{catalog_schema}.{generate_table_name()}")
         .mode("incremental")
         .format("delta")
         .primary_keys(["ID", "FIRST_NAME"])
@@ -164,7 +165,7 @@ def managed_with_partition_zorder_single_pk_datetime_watermark(
 ) -> DeltaTable:
     return (
         capture(df, spark)
-        .table(f"{catalog_schema}.employee_spk_dw_pz")
+        .table(f"{catalog_schema}.{generate_table_name()}")
         .mode("incremental")
         .format("delta")
         .primary_keys(["ID"])
@@ -197,9 +198,15 @@ def external_default_single_pk_datetime_watermark(
     single pk
     datetime watermark
     """
+    test_table_name = generate_table_name()
     return (
         capture(df, spark)
-        .location(f"{external_location}/employee_spk_dw")
+        .table(f"{catalog_schema}.{test_table_name}")
+        .options(
+            {
+                "path": f"{external_location}/{test_table_name}",
+            }
+        )
         .mode("incremental")
         .log_level("DEBUG")
         .format("delta")
@@ -217,9 +224,15 @@ def external_default_multiple_pk_datetime_watermark(
     multiple pks
     datetime watermark
     """
+    test_table_name = generate_table_name()
     return (
         capture(df, spark)
-        .location(f"{external_location}/employee_mpk_dw")
+        .table(f"{catalog_schema}.{test_table_name}")
+        .options(
+            {
+                "path": f"{external_location}/{test_table_name}",
+            }
+        )
         .mode("incremental")
         .log_level("DEBUG")
         .format("delta")
@@ -237,9 +250,15 @@ def external_default_single_pk_int_watermark(
     single pk
     int watermark
     """
+    test_table_name = generate_table_name()
     return (
         capture(df, spark)
-        .location(f"{external_location}/employee_spk_iw")
+        .table(f"{catalog_schema}.{test_table_name}")
+        .options(
+            {
+                "path": f"{external_location}/{test_table_name}",
+            }
+        )
         .mode("incremental")
         .log_level("DEBUG")
         .format("delta")
@@ -257,9 +276,15 @@ def external_default_multiple_pk_int_watermark(
     multiple pks
     int watermark
     """
+    test_table_name = generate_table_name()
     return (
         capture(df, spark)
-        .location(f"{external_location}/employee_mpk_iw")
+        .table(f"{catalog_schema}.{test_table_name}")
+        .options(
+            {
+                "path": f"{external_location}/{test_table_name}",
+            }
+        )
         .mode("incremental")
         .log_level("DEBUG")
         .format("delta")
@@ -273,9 +298,10 @@ def external_default_multiple_pk_int_watermark(
 def external_with_partition_zorder_single_pk_datetime_watermark(
     df: DataFrame, spark: SparkSession
 ) -> DeltaTable:
+    test_table_name = generate_table_name()
     return (
         capture(df, spark)
-        .location(f"{external_location}/employee_spk_dw_pz")
+        .table(f"{catalog_schema}.{test_table_name}")
         .mode("incremental")
         .log_level("DEBUG")
         .format("delta")
@@ -295,6 +321,7 @@ def external_with_partition_zorder_single_pk_datetime_watermark(
         )
         .options(
             {
+                "path": f"{external_location}/{test_table_name}",
                 "maxRecordsPerFile": 1000,
             }
         )

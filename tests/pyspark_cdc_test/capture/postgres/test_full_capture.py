@@ -3,8 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pytest
+
 from pyspark_cdc import capture
 from pyspark_cdc_test import catalog_schema, external_location
+from pyspark_cdc_test.utils import generate_table_name
 from pyspark_cdc_test.utils.employee_generator import EmployeeGenerator
 from pyspark_cdc_test.utils.postgres_operations import (
     add_column,
@@ -101,7 +104,7 @@ def _test_steps(
 def managed_default(df: DataFrame, spark: SparkSession) -> DeltaTable:
     return (
         capture(df, spark)
-        .table(f"{catalog_schema}.pg_employee")
+        .table(f"{catalog_schema}.{generate_table_name()}")
         .mode("full")
         .format("delta")
         .start()
@@ -111,7 +114,7 @@ def managed_default(df: DataFrame, spark: SparkSession) -> DeltaTable:
 def managed_with_partition_zorder(df: DataFrame, spark: SparkSession) -> DeltaTable:
     return (
         capture(df, spark)
-        .table(f"{catalog_schema}.pg_employee")
+        .table(f"{catalog_schema}.{generate_table_name()}")
         .mode("full")
         # .partition_by(["COUNTRY", "GENDER"])
         .schedule_zorder("*", ["FIRST_NAME", "SURNAME"])
@@ -127,7 +130,6 @@ def managed_with_partition_zorder(df: DataFrame, spark: SparkSession) -> DeltaTa
             {
                 "overwriteSchema": True,
                 "maxRecordsPerFile": 1000,
-                "userMetadata": "Full capture test",
             }
         )
         .start()
@@ -135,9 +137,15 @@ def managed_with_partition_zorder(df: DataFrame, spark: SparkSession) -> DeltaTa
 
 
 def external_default(df: DataFrame, spark: SparkSession) -> DeltaTable:
+    test_table_name = generate_table_name()
     return (
         capture(df, spark)
-        .location(f"{external_location}/pg_employee")
+        .table(f"{catalog_schema}.{test_table_name}")
+        .options(
+            {
+                "path": f"{external_location}/{test_table_name}",
+            }
+        )
         .mode("full")
         .format("delta")
         .start()
@@ -145,9 +153,10 @@ def external_default(df: DataFrame, spark: SparkSession) -> DeltaTable:
 
 
 def external_with_partition_zorder(df: DataFrame, spark: SparkSession) -> DeltaTable:
+    test_table_name = generate_table_name()
     return (
         capture(df, spark)
-        .location(f"{external_location}/pg_employee")
+        .table(f"{catalog_schema}.{test_table_name}")
         .mode("full")
         .partition_by(["COUNTRY", "GENDER"])
         .schedule_zorder("1-31", ["FIRST_NAME", "SURNAME"])
@@ -163,9 +172,9 @@ def external_with_partition_zorder(df: DataFrame, spark: SparkSession) -> DeltaT
         )
         .options(
             {
+                "path": f"{external_location}/{test_table_name}",
                 "overwriteSchema": True,
                 "maxRecordsPerFile": 1000,
-                "userMetadata": "Full capture test",
             }
         )
         .start()
@@ -187,5 +196,6 @@ def test_external_with_default_configs(mock_spark: SparkSession) -> None:
     _test_steps(mock_spark, external_default)
 
 
+@pytest.mark.xfail(reason="Known bug in https://github.com/delta-io/delta/issues/4855")
 def test_external_with_partition_zorder(mock_spark: SparkSession) -> None:
     _test_steps(mock_spark, external_with_partition_zorder)

@@ -57,12 +57,7 @@ class CapturerBuilder:
         Returns:
             CapturerBuilder: The builder instance for chaining.
         """
-        if "table_identifier" in self.config:
-            raise ValueError(
-                "Cannot set both table name and location. Use either 'table()' or 'location()'."
-            )
         self.config["table_identifier"] = table
-        self.config["managed"] = True
         return self
 
     def mode(self, mode: str) -> CapturerBuilder:
@@ -83,24 +78,6 @@ class CapturerBuilder:
                 f"Invalid capture mode '{mode}'. Use 'incremental' or 'full'."
             )
         self.config["mode"] = mode
-        return self
-
-    def location(self, location: str) -> CapturerBuilder:
-        """
-        Set the target location path for external tables.
-
-        Args:
-            location (str): The file system path for the external table.
-
-        Returns:
-            CapturerBuilder: The builder instance for chaining.
-        """
-        if "table_identifier" in self.config:
-            raise ValueError(
-                "Cannot set both table name and location. Use either 'table()' or 'location()'."
-            )
-        self.config["table_identifier"] = location
-        self.config["managed"] = False
         return self
 
     def partition_by(self, cols: list[str]) -> CapturerBuilder:
@@ -352,6 +329,10 @@ class CapturerBuilder:
         if "mode" not in self.config:
             raise ValueError(
                 "Capture mode is not specified. Use the 'mode' method to specify the capture mode."
+            )
+        if "table_identifier" not in self.config:
+            raise ValueError(
+                "table_identifier is not specified. Use the 'table' method to specify the table identifier."
             )
 
         logger.info(f"CapturerBuilder Configuration: \n{self}")
