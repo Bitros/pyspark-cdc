@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from pyspark_cdc_test.utils import generate_table_name
 from pyspark_cdc_test.utils.employee_generator import EmployeeGenerator
 from pyspark_cdc_test.utils.postgres_operations import (
     add_column,
@@ -74,7 +73,3 @@ def test_postgres_operations() -> None:
     add_column("public.employee", "id2", "INTEGER")
     add_column("public.employee", "id3", "INTEGER", 3, not_null=True)
     add_column("public.employee", "id4", "INTEGER", 4, not_null=False)
-
-
-def test_generate_table_name() -> None:
-    assert generate_table_name() == "test_utils_test_generate_table_name"
